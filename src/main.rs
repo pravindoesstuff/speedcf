@@ -3,5 +3,7 @@ mod net;
 
 #[tokio::main]
 async fn main() {
-    net::test_download(1000000000).await.unwrap();
+    net::net_info().await.unwrap();
+    println!("Performing 100kB download");
+    net::test_download(100_000_000).await.unwrap();
 }
