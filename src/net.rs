@@ -6,7 +6,7 @@ lazy_static::lazy_static! {
     static ref CLIENT: reqwest::Client = reqwest::Client::new();
 }
 
-pub async fn test_download(target_size: u64) -> Result<(), reqwest::Error> {
+pub async fn test_download(target_size: u64) -> Result<std::time::Duration, reqwest::Error> {
     let mut stream = CLIENT
         .get(format!(
             "https://speed.cloudflare.com/__down?bytes={}",
@@ -23,13 +23,17 @@ pub async fn test_download(target_size: u64) -> Result<(), reqwest::Error> {
             .progress_chars("=> "),
     );
 
+    let timer = std::time::Instant::now();
+
     while let Some(block) = stream.next().await {
         pb.inc(block?.len() as u64)
     }
 
-    pb.finish_with_message("Finished Downloado");
+    let duration = timer.elapsed();
+
+    pb.finish_with_message("Finished Download");
     pb.finish_and_clear();
-    Ok(())
+    Ok(duration)
 }
 
 pub async fn net_info() -> Result<(), reqwest::Error> {
