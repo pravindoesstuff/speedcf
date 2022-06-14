@@ -1,4 +1,5 @@
 use futures_util::StreamExt;
+use colored::Colorize;
 
 const UP_TARGET: &str = "https://speed.cloudflare.com/__up";
 
@@ -6,7 +7,7 @@ lazy_static::lazy_static! {
     static ref CLIENT: reqwest::Client = reqwest::Client::new();
 }
 
-pub async fn test_download(target_size: u64) -> Result<std::time::Duration, reqwest::Error> {
+pub async fn test_download(target_size: u64) -> Result<(), reqwest::Error> {
     let mut stream = CLIENT
         .get(format!(
             "https://speed.cloudflare.com/__down?bytes={}",
@@ -17,23 +18,24 @@ pub async fn test_download(target_size: u64) -> Result<std::time::Duration, reqw
         .bytes_stream();
     let pb = indicatif::ProgressBar::new(target_size);
 
+    let mut running_style = format!("{} download test\t", indicatif::HumanBytes(target_size)).italic().to_string();
+    running_style.push_str("[{elapsed_precise:.cyan}] [{bar:40}] {bytes_per_sec} {spinner}");
     pb.set_style(
         indicatif::ProgressStyle::default_bar()
-            .template("[{elapsed_precise:.cyan/blue}] [{bar:40}] {bytes_per_sec} {spinner}")
+            .template(&running_style)
             .progress_chars("=> "),
     );
-
-    let timer = std::time::Instant::now();
 
     while let Some(block) = stream.next().await {
         pb.inc(block?.len() as u64)
     }
 
-    let duration = timer.elapsed();
-
-    pb.finish_with_message("Finished Download");
-    pb.finish_and_clear();
-    Ok(duration)
+    let mut finish_style = format!("{} download test\t", indicatif::HumanBytes(target_size)).italic().to_string();
+    finish_style.push_str("{bytes_per_sec:.green}");
+    
+    pb.set_style(indicatif::ProgressStyle::default_bar().template(&finish_style));
+    pb.finish();
+    Ok(())
 }
 
 pub async fn net_info() -> Result<(), reqwest::Error> {
