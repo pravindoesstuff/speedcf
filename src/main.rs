@@ -5,22 +5,19 @@ mod net;
 
 #[tokio::main]
 async fn main() {
-    net::net_info().await.unwrap();
-    println!();
-    
-    if let Err(e) = net::test_download(102400).await {
+    if let Err(e) = net::net_info().await {
         panic!("{}", e);
     }
-    if let Err(e) = net::test_download(1048576).await {
-        panic!("{}", e);
-    }
-    if let Err(e) = net::test_download(10485760).await {
-        panic!("{}", e);
-    }
-    if let Err(e) = net::test_download(26214400).await {
+    if let Err(e) = download_test().await {
         panic!("{}", e);
     } 
-    if let Err(e) = net::test_download(104857600).await {
-        panic!("{}", e);
-    }
+}
+
+async fn download_test() -> Result<(), reqwest::Error> {
+    net::test_download(102400).await?;
+    net::test_download(1048576).await?;
+    net::test_download(10485760).await?;
+    net::test_download(26214400).await?;
+    net::test_download(104857600).await?;
+    Ok(())
 }
